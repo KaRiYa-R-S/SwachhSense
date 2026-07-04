@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwachhSense — Smart Public Toilet Monitoring for Bengaluru</title>
+<meta name="description" content="SwachhSense is an IoT-based monitoring network for Bengaluru's public toilets — live hygiene sensing, alerts and analytics supporting Swachh Bharat Mission (Urban).">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+<!-- Firebase (used only to swap Login → Dashboard in the nav if already signed in) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+</head>
+<body>
+
+<div class="sitebar">
+  <div class="sb-in">
+    <a class="sb-brand" href="index.html">
+      <span class="sb-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 7 5 10.2 5 14a7 7 0 0 0 14 0c0-3.8-3-7-7-12z"/><path d="M9 14a3 3 0 0 0 3 3"/></svg></span>
+      <b>Swachh<em>Sense</em></b>
+    </a>
+    <nav class="sb-nav" aria-label="Site">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="facilities.html">Facilities</a>
+      <a href="technology.html">Technology</a>
+      <a href="team.html">Team</a>
+    </nav>
+    <div class="sb-right" id="nav-auth">
+      <a class="sb-btn" href="login.html">Log in</a>
+      <a class="sb-btn solid" href="signup.html">Create account</a>
+    </div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-in">
+    <div>
+      <div class="eyebrow">IoT · Smart City · Swachh Bharat Mission (Urban)</div>
+      <h1>Clean toilets are a <em>data problem</em> too.</h1>
+      <p>SwachhSense puts low-cost sensor nodes inside Bengaluru's public toilets and streams occupancy, ammonia, water and soap levels to one civic command centre — so cleaning crews are dispatched by evidence, not by complaint.</p>
+      <div class="cta-row">
+        <a class="btn solid" href="signup.html">Create an account</a>
+        <a class="btn ghost" href="login.html">Log in to the command centre</a>
+      </div>
+    </div>
+    <div class="hero-panel" role="img" aria-label="Sample telemetry packet from a facility node">
+      <div class="row"><span>NODE</span><span class="v">BLR-02 · CUBBON PARK</span></div>
+      <div class="row"><span>STALLS FREE</span><span class="v ok">4 / 6</span></div>
+      <div class="row"><span>AMMONIA NH₃</span><span class="v ok">7.2 ppm</span></div>
+      <div class="row"><span>WATER TANK</span><span class="v">81%</span></div>
+      <div class="row"><span>SOAP LEVEL</span><span class="v warn">34%</span></div>
+      <div class="row"><span>CLEANLINESS</span><span class="v ok">92 / 100</span></div>
+      <div class="row"><span>LINK</span><span class="v ok">● LIVE</span></div>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <section>
+    <div class="eyebrow">Why it matters</div>
+    <h2 class="sec">The problem we're solving</h2>
+    <p class="lede">Bengaluru maintains hundreds of public toilets, but upkeep is reactive: a facility is cleaned on a fixed roster or after citizens complain. Between those moments, hygiene silently degrades — and usable public sanitation directly affects public health, dignity and how the city is experienced by women, children and gig workers who depend on it daily.</p>
+    <div class="grid3">
+      <div class="card feature">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke="currentColor" stroke-linecap="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/></svg></div>
+        <h3>Sense continuously</h3>
+        <p>Each facility carries an ESP32 node reading ammonia (odour), stall occupancy, footfall, water-tank and soap levels — every few seconds, around the clock.</p>
+      </div>
+      <div class="card feature">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7v6c0 5 4 8.4 9 9 5-.6 9-4 9-9V7l-9-5z"/><path d="m8.5 12 2.4 2.4L15.5 9.8"/></svg></div>
+        <h3>Alert automatically</h3>
+        <p>A rule engine turns raw readings into actionable alerts — high NH₃, low supplies, offline nodes — routed to supervisors with acknowledge &amp; dispatch workflows.</p>
+      </div>
+      <div class="card feature">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke="currentColor" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></div>
+        <h3>Decide with data</h3>
+        <p>Footfall curves, cleanliness trends and refill forecasts let the civic body schedule crews and consumables where the city actually needs them.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">From sensor to action</div>
+    <h2 class="sec">How SwachhSense works</h2>
+    <div class="stepper">
+      <div class="step"><h3>Sense</h3><p>MQ-137 gas, ultrasonic level and IR footfall sensors sample each facility in real time.</p></div>
+      <div class="step"><h3>Transmit</h3><p>The ESP32 node packages readings as JSON telemetry packets and streams them to the platform.</p></div>
+      <div class="step"><h3>Evaluate</h3><p>The rule engine scores cleanliness and raises alerts the moment thresholds are crossed.</p></div>
+      <div class="step"><h3>Act</h3><p>Supervisors acknowledge alerts, dispatch crews and log maintenance — all from the dashboard.</p></div>
+    </div>
+    <p class="lede" style="margin-top:18px">This deployment monitors <b>6 pilot facilities</b> across Bengaluru — Majestic, Cubbon Park, KR Market, Indiranagar Metro, Jayanagar 4th Block and MG Road. In this academic prototype the sensor hardware is simulated in software, but the data model matches the JSON packet a physical ESP32 node would send. <a href="facilities.html">Browse the facility network →</a></p>
+  </section>
+
+  <section>
+    <div class="eyebrow">Get started</div>
+    <h2 class="sec">See the live command centre</h2>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+      <div>
+        <b>The dashboard is for signed-in operators only.</b>
+        <div style="color:var(--muted);font-size:13.5px;margin-top:3px">Create a free account to watch live telemetry, trigger a demo incident and explore the alert workflow.</div>
+      </div>
+      <div class="cta-row">
+        <a class="btn solid" href="signup.html" style="background:var(--primary)">Create account</a>
+        <a class="btn" style="border:1px solid var(--line);color:var(--ink)" href="login.html">Log in</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="ft">
+    <span>SwachhSense — academic prototype · Department of CSE, Faculty of Engineering &amp; Technology, JAIN (Deemed-to-be University)</span>
+    <span>Sensor data is simulated · Supports Swachh Bharat Mission (Urban)</span>
+  </div>
+</footer>
+
+<script>
+// If the visitor is already signed in, show Dashboard + Logout in the nav.
+auth.onAuthStateChanged((user) => {
+  if (!user) return;
+  document.getElementById("nav-auth").innerHTML =
+    '<span class="sb-user" data-user-email></span>' +
+    '<a class="sb-btn solid" href="dashboard.html">Open dashboard</a>' +
+    '<button class="sb-btn" data-logout>Log out</button>';
+  const el = document.querySelector("[data-user-email]");
+  el.textContent = user.displayName || user.email;
+});
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("[data-logout]")) return;
+  auth.signOut().then(() => window.location.replace("index.html"));
+});
+</script>
+</body>
+</html>
