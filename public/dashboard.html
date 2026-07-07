@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwachhSense — Smart Public Toilet Monitoring · Bengaluru Network Command Centre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --paper:#F2F5F1;
+  --card:#FFFFFF;
+  --ink:#10201C;
+  --muted:#5C6E68;
+  --line:#DCE4DF;
+  --primary:#0E6B5C;
+  --primary-deep:#0A4F44;
+  --primary-soft:#E2EFEB;
+  --night:#0D1F1B;
+  --night-2:#122A24;
+  --night-line:#22453C;
+  --saffron:#DD7A1E;
+  --saffron-soft:#FBEEDD;
+  --ok:#178A54;   --ok-soft:#E1F2E8;
+  --busy:#B96A00; --busy-soft:#FBF0DC;
+  --alert:#C2381F;--alert-soft:#F9E6E1;
+  --maint:#5B6C8F;--maint-soft:#E9EDF5;
+  --radius:14px;
+  --shadow:0 1px 2px rgba(16,32,28,.05),0 6px 20px -8px rgba(16,32,28,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Public Sans',system-ui,sans-serif;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.55}
+::selection{background:var(--primary);color:#fff}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2.5px solid var(--saffron);outline-offset:2px;border-radius:4px}
+
+/* ============ Header / command bar ============ */
+header{background:var(--night);color:#EAF3EF;position:sticky;top:0;z-index:60;border-bottom:1px solid var(--night-line)}
+.hd{max-width:1320px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:42px;height:42px;border-radius:10px;background:linear-gradient(150deg,#12816E,#0A4F44);display:grid;place-items:center;flex:none}
+.brand-mark svg{width:24px;height:24px}
+.brand h1{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:24px;letter-spacing:.5px;line-height:1;text-transform:uppercase}
+.brand h1 em{font-style:normal;color:#7CD9BE}
+.brand .sub{font-size:11px;letter-spacing:.4px;color:#9DB8AE;margin-top:1px}
+nav{display:flex;gap:2px;margin-left:8px}
+nav a{color:#C7DAD2;text-decoration:none;font-size:13px;font-weight:500;padding:7px 12px;border-radius:8px}
+nav a:hover{background:rgba(255,255,255,.08);color:#fff}
+.hd-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sim-ctl{display:flex;align-items:center;gap:6px;background:var(--night-2);border:1px solid var(--night-line);border-radius:9px;padding:4px}
+.sim-ctl button{background:transparent;border:none;color:#C7DAD2;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;padding:5px 9px;border-radius:6px}
+.sim-ctl button:hover{background:rgba(255,255,255,.09);color:#fff}
+.sim-ctl button.on{background:var(--primary);color:#fff}
+.clock{font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--night-2);border:1px solid var(--night-line);padding:8px 12px;border-radius:9px;display:flex;align-items:center;gap:8px;color:#DFF0E9}
+.pulse{width:8px;height:8px;border-radius:50%;background:#57E6AE;animation:pulse 1.8s infinite}
+.pulse.paused{background:var(--saffron);animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(87,230,174,.55)}70%{box-shadow:0 0 0 8px rgba(87,230,174,0)}100%{box-shadow:0 0 0 0 rgba(87,230,174,0)}}
+
+.wrap{max-width:1320px;margin:0 auto;padding:26px 24px 70px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:var(--primary);font-weight:600}
+h2{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:27px;letter-spacing:.3px;margin:2px 0 16px;text-transform:uppercase}
+section{margin-bottom:46px}
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.sec-head h2{margin-bottom:0}
+
+/* ============ Command strip: KPIs + map ============ */
+.command{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:16px;align-items:stretch}
+@media(max-width:980px){.command{grid-template-columns:1fr}}
+.kpi-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
+@media(max-width:560px){.kpi-panel{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px 10px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi .k-label{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.2px}
+.kpi .k-value{font-family:'Rajdhani',sans-serif;font-size:38px;font-weight:700;line-height:1.05;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .k-delta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
+.kpi .k-delta.up{color:var(--ok)} .kpi .k-delta.down{color:var(--alert)}
+.k-value.ok{color:var(--ok)} .k-value.bad{color:var(--alert)} .k-value.warn{color:var(--busy)}
+.spark{position:absolute;right:10px;bottom:8px;opacity:.9}
+
+.map-panel{background:var(--night);border-radius:var(--radius);border:1px solid var(--night-line);box-shadow:var(--shadow);color:#D9EAE2;display:flex;flex-direction:column;overflow:hidden;min-height:380px}
+.map-head{padding:13px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--night-line)}
+.map-head .t{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:17px;letter-spacing:1.2px;text-transform:uppercase}
+.map-head .legend{display:flex;gap:12px;font-size:11px;color:#9DB8AE}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.map-body{flex:1;position:relative}
+.map-body svg{width:100%;height:100%;display:block;position:absolute;inset:0}
+.pin{cursor:pointer}
+.pin circle.halo{animation:halo 2.2s infinite}
+@keyframes halo{0%{r:9;opacity:.55}80%{r:20;opacity:0}100%{r:20;opacity:0}}
+.pin text{font-family:'IBM Plex Mono',monospace;font-size:9.5px;fill:#BFD8CE;letter-spacing:.5px}
+.pin:hover text,.pin:focus text{fill:#fff}
+.map-foot{padding:10px 18px;border-top:1px solid var(--night-line);font-family:'IBM Plex Mono',monospace;font-size:11px;color:#88A79B;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+/* ============ Toolbar (search / filter / sort) ============ */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.search{position:relative}
+.search input{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:9px 12px 9px 34px;font:inherit;font-size:13.5px;width:230px;color:var(--ink)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:7px 14px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+select.sort{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:8px 10px;font:inherit;font-size:13px;color:var(--ink)}
+
+/* ============ Facility cards ============ */
+.fac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(370px,1fr));gap:16px}
+.fac{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow);transition:transform .18s ease,box-shadow .18s ease}
+.fac:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(16,32,28,.06),0 14px 30px -10px rgba(16,32,28,.16)}
+.fac.alerting{border-color:#E9BCB2}
+.fac-head{padding:15px 18px 12px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start;border-bottom:1px dashed var(--line)}
+.fac-head h3{font-family:'Rajdhani',sans-serif;font-size:19px;font-weight:700;letter-spacing:.3px;line-height:1.15}
+.fac-head .loc{font-size:12.5px;color:var(--muted);margin-top:1px}
+.fac-head .fid{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);letter-spacing:.8px}
+.badge{font-size:11.5px;font-weight:700;padding:4px 11px;border-radius:99px;white-space:nowrap;letter-spacing:.2px}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.busy{background:var(--busy-soft);color:var(--busy)}
+.badge.alert{background:var(--alert-soft);color:var(--alert)}
+.badge.maint{background:var(--maint-soft);color:var(--maint)}
+.stalls{padding:13px 18px 4px}
+.s-label{font-size:10.5px;color:var(--muted);font-weight:600;margin-bottom:7px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;text-transform:uppercase}
+.stall-row{display:flex;gap:7px;flex-wrap:wrap}
+.stall{width:34px;height:40px;border-radius:8px;display:grid;place-items:center;font-size:14px;border:1.5px solid transparent;transition:background .5s,border-color .5s}
+.stall.free{background:var(--ok-soft);border-color:#BEE3CD}
+.stall.occ{background:var(--busy-soft);border-color:#EDD2A6}
+.stall.oos{background:var(--maint-soft);border-color:#CBD3E4;opacity:.7}
+.sensors{padding:12px 18px 6px;display:grid;grid-template-columns:1fr 1fr;gap:9px 16px}
+.sensor .s-name{font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;font-weight:500}
+.sensor .s-name b{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--ink);font-size:11.5px}
+.bar{height:6px;background:#EBF0EC;border-radius:99px;margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;transition:width .6s ease,background .6s}
+.bar i.g{background:var(--ok)} .bar i.a{background:var(--busy)} .bar i.r{background:var(--alert)}
+.fac-foot{margin-top:auto;padding:11px 18px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px dashed var(--line)}
+.fac-foot .cleaned{font-size:12px;color:var(--muted)}
+.fac-actions{display:flex;gap:8px}
+.btn{border:none;border-radius:9px;padding:8px 13px;font-size:12.5px;font-weight:700}
+.btn.ghost{background:var(--primary-soft);color:var(--primary-deep)}
+.btn.ghost:hover{background:#D2E7E1}
+.btn.warn{background:var(--saffron-soft);color:#9A5510}
+.btn.warn:hover{background:#F5E2C6}
+.btn.solid{background:var(--primary);color:#fff}
+.btn.solid:hover{background:var(--primary-deep)}
+
+/* ============ Analytics ============ */
+.charts{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+@media(max-width:900px){.charts{grid-template-columns:1fr}}
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.chart-card h4{font-family:'Rajdhani',sans-serif;font-size:16.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:2px}
+.chart-card .sub{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+.chart-box{position:relative;height:260px}
+.nh3-strip{grid-column:1/-1;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.nh3-cells{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+.nh3-cell{border-radius:10px;padding:12px 14px;border:1px solid var(--line)}
+.nh3-cell .n{font-size:11.5px;font-weight:600;color:var(--muted)}
+.nh3-cell .v{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.nh3-cell.lo{background:var(--ok-soft)} .nh3-cell.md{background:var(--busy-soft)} .nh3-cell.hi{background:var(--alert-soft)}
+
+/* ============ Operations ============ */
+.ops{display:grid;grid-template-columns:1fr 1.25fr;gap:16px}
+@media(max-width:980px){.ops{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
+.panel-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.panel-head h4{font-family:'Rajdhani',sans-serif;font-size:16.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+.panel-head .mini{display:flex;gap:5px}
+.mini button{border:1px solid var(--line);background:#fff;border-radius:7px;font-size:11px;font-weight:700;padding:4px 9px;color:var(--muted)}
+.mini button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.alert-list{max-height:380px;overflow-y:auto;padding:8px 10px}
+.al{display:flex;gap:11px;padding:10px 9px;border-radius:10px;align-items:flex-start}
+.al:hover{background:#F6F9F6}
+.al .dot{width:9px;height:9px;border-radius:50%;margin-top:6px;flex:none}
+.al.alert .dot{background:var(--alert)} .al.warn .dot{background:var(--saffron)} .al.info .dot{background:var(--primary)}
+.al .msg{font-size:13px;line-height:1.45}
+.al .meta{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:2px}
+.al .ack{margin-left:auto;flex:none;border:1px solid var(--line);background:#fff;border-radius:7px;font-size:10.5px;font-weight:700;padding:4px 8px;color:var(--muted)}
+.al .ack:hover{border-color:var(--primary);color:var(--primary)}
+.al.acked{opacity:.5}
+.al.acked .ack{visibility:hidden}
+.tbl-wrap{max-height:380px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:12.8px}
+th{position:sticky;top:0;background:#F7FAF7;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--line)}
+td{padding:9px 14px;border-bottom:1px solid #EEF2EE;vertical-align:top}
+td.mono{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);white-space:nowrap}
+.tag{font-size:10.5px;font-weight:700;padding:2.5px 9px;border-radius:99px}
+.tag.sensor{background:var(--primary-soft);color:var(--primary-deep)}
+.tag.citizen{background:var(--saffron-soft);color:#9A5510}
+.tag.routine{background:var(--maint-soft);color:var(--maint)}
+.console{grid-column:1/-1;background:var(--night);border-radius:var(--radius);border:1px solid var(--night-line);padding:16px 18px;color:#9FE8C8;font-family:'IBM Plex Mono',monospace;font-size:11.5px;max-height:190px;overflow-y:auto}
+.console .c-title{color:#6FA891;letter-spacing:1.5px;font-size:10.5px;margin-bottom:8px;text-transform:uppercase}
+.console div{white-space:pre-wrap;word-break:break-all;margin-bottom:3px}
+
+/* ============ Drawer (facility detail) ============ */
+.scrim{position:fixed;inset:0;background:rgba(13,31,27,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:80}
+.scrim.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(520px,100%);background:var(--paper);z-index:90;transform:translateX(102%);transition:transform .3s cubic-bezier(.3,.8,.3,1);box-shadow:-14px 0 40px rgba(13,31,27,.25);display:flex;flex-direction:column}
+.drawer.open{transform:translateX(0)}
+.dr-head{background:var(--night);color:#EAF3EF;padding:18px 22px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.dr-head h3{font-family:'Rajdhani',sans-serif;font-size:23px;font-weight:700;letter-spacing:.4px;line-height:1.1}
+.dr-head .loc{font-size:12.5px;color:#9DB8AE;margin-top:2px}
+.dr-close{background:var(--night-2);border:1px solid var(--night-line);color:#C7DAD2;border-radius:9px;width:34px;height:34px;font-size:16px;flex:none}
+.dr-body{flex:1;overflow-y:auto;padding:18px 22px 30px}
+.gauges{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.gauge{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.gauge .g-name{font-size:11.5px;color:var(--muted);font-weight:600}
+.gauge .g-val{font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.gauge canvas{width:100%!important;height:42px!important;margin-top:4px}
+.dr-sec{margin-top:20px}
+.dr-sec h5{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.dr-log{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 14px;max-height:210px;overflow-y:auto}
+.dr-log .row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #EEF2EE;font-size:12.5px}
+.dr-log .row:last-child{border-bottom:none}
+.dr-log .row .t{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);white-space:nowrap;padding-top:1.5px}
+
+/* ============ Modal (citizen report) ============ */
+.modal{position:fixed;inset:0;display:grid;place-items:center;z-index:100;pointer-events:none}
+.modal .box{background:var(--card);border-radius:16px;box-shadow:0 30px 70px rgba(13,31,27,.35);width:min(440px,calc(100% - 32px));padding:22px 24px;transform:translateY(14px) scale(.97);opacity:0;transition:.25s;pointer-events:none}
+.modal.open .box{transform:none;opacity:1;pointer-events:auto}
+.modal h3{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:.3px}
+.modal .sub{font-size:13px;color:var(--muted);margin:2px 0 14px}
+.issue-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.issue{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:11px 12px;font-size:12.8px;font-weight:600;text-align:left;color:var(--ink)}
+.issue.on{border-color:var(--primary);background:var(--primary-soft)}
+.modal textarea{width:100%;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:13px;padding:10px 12px;resize:vertical;min-height:64px}
+.modal .row-btn{display:flex;gap:9px;justify-content:flex-end;margin-top:14px}
+
+/* ============ Misc ============ */
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,80px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:11px;font-size:13.5px;font-weight:600;box-shadow:0 12px 32px rgba(13,31,27,.35);transition:transform .35s cubic-bezier(.3,.8,.3,1);z-index:120;max-width:calc(100% - 40px)}
+.toast.show{transform:translate(-50%,0)}
+footer{background:var(--night);color:#88A79B;margin-top:30px}
+footer .ft{max-width:1320px;margin:0 auto;padding:26px 24px;font-size:12.5px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+
+/* ============ Dark theme ============ */
+html[data-theme="dark"]{
+  --paper:#0C1614; --card:#12211D; --ink:#E7F1EC; --muted:#93A9A1;
+  --line:#213A33; --primary:#2FB79B; --primary-deep:#1E8C77; --primary-soft:#173029;
+  --saffron:#E8933C; --saffron-soft:#2A2013;
+  --ok:#37C285; --ok-soft:#12291F; --busy:#E0972F; --busy-soft:#2A2113;
+  --alert:#E86A50; --alert-soft:#2C1712; --maint:#8CA0C9; --maint-soft:#1A2030;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -10px rgba(0,0,0,.55);
+}
+html[data-theme="dark"] .console{background:#0A1512}
+html[data-theme="dark"] .nh3-strip{background:var(--card)}
+html[data-theme="dark"] select.sort,html[data-theme="dark"] .search input{background:var(--card);color:var(--ink)}
+
+/* ============ Header controls (theme + demo) ============ */
+.hd-btn{background:var(--night-2);border:1px solid var(--night-line);color:#C7DAD2;border-radius:9px;
+  padding:8px 12px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:7px}
+.hd-btn:hover{background:rgba(255,255,255,.09);color:#fff}
+.hd-btn.demo{border-color:#6a4a1e;color:#F0C88A}
+.hd-btn.demo:hover{background:rgba(221,122,30,.18)}
+
+/* ============ Evaluation & analytics panel ============ */
+.eval-grid{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:16px}
+@media(max-width:980px){.eval-grid{grid-template-columns:1fr}}
+.eval-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.eval-card h4{font-family:'Rajdhani',sans-serif;font-size:16.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px}
+.eval-card .sub{font-size:12px;color:var(--muted);margin-bottom:12px}
+.eval-donut{display:flex;align-items:center;gap:16px}
+.eval-donut .legend2{display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.eval-donut .legend2 span{display:flex;align-items:center;gap:8px;color:var(--ink)}
+.eval-donut .legend2 i{width:10px;height:10px;border-radius:3px;flex:none}
+.eval-donut .legend2 b{margin-left:auto;font-family:'IBM Plex Mono',monospace;color:var(--muted);font-weight:600}
+.lat-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:12.5px}
+.lat-row .ln{width:96px;color:var(--muted);flex:none}
+.lat-row .lbar{flex:1;height:12px;background:var(--primary-soft);border-radius:6px;overflow:hidden}
+.lat-row .lbar i{display:block;height:100%;background:var(--primary);border-radius:6px}
+.lat-row.e2e .lbar i{background:var(--saffron)}
+.lat-row .lv{width:56px;text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;flex:none}
+.eval-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.eval-stat{background:var(--primary-soft);border-radius:10px;padding:11px 13px}
+.eval-stat .n{font-family:'Rajdhani',sans-serif;font-size:27px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.eval-stat .l{font-size:11.5px;color:var(--muted);margin-top:3px}
+.eval-trend{grid-column:1/-1}
+.eval-trend .chart-box{height:190px}
+.eta-line{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);
+  padding:7px 0;border-top:1px dashed var(--line)}
+.eta-line b{color:var(--ink);font-family:'IBM Plex Mono',monospace}
+</style>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<!-- ============ Firebase Authentication (route guard) ============ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/auth-guard.js"></script>
+<style>
+/* Self-contained styles for the cross-page site bar only —
+   does not touch any existing dashboard rule. */
+.sitebar{background:var(--night);color:#EAF3EF;border-bottom:1px solid var(--night-line)}
+.sitebar .sb-in{max-width:1320px;margin:0 auto;padding:8px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.sb-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.6px;color:#88A79B;text-transform:uppercase}
+.sb-nav{display:flex;gap:2px;flex-wrap:wrap}
+.sb-nav a{color:#C7DAD2;text-decoration:none;font-size:12.5px;font-weight:500;padding:6px 11px;border-radius:8px}
+.sb-nav a:hover{background:rgba(255,255,255,.08);color:#fff}
+.sb-nav a[aria-current="page"]{background:var(--primary);color:#fff}
+.sb-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sb-user{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9DB8AE;background:var(--night-2);border:1px solid var(--night-line);padding:6px 10px;border-radius:9px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-btn{border:1px solid var(--night-line);background:var(--night-2);color:#DFF0E9;font-size:12px;font-weight:600;padding:7px 13px;border-radius:9px}
+.sb-btn:hover{background:rgba(255,255,255,.09)}
+</style>
+</head>
+<body>
+<!-- ============ Cross-page navigation + session (added for auth) ============ -->
+<div class="sitebar">
+  <div class="sb-in">
+    <span class="sb-label">SwachhSense · Site</span>
+    <nav class="sb-nav" aria-label="Site pages">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html" aria-current="page">Dashboard</a>
+      <a href="facilities.html">Facilities</a>
+      <a href="technology.html">Technology</a>
+      <a href="team.html">Team</a>
+    </nav>
+    <div class="sb-right">
+      <span class="sb-user" data-user-email>…</span>
+      <button class="sb-btn" data-logout>Log out</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="hd">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 7 5 10.2 5 14a7 7 0 0 0 14 0c0-3.8-3-7-7-12z"/><path d="M9 14a3 3 0 0 0 3 3"/></svg>
+      </div>
+      <div>
+        <h1>Swachh<em>Sense</em></h1>
+        <div class="sub">Bengaluru Public Toilet Network · Command Centre</div>
+      </div>
+    </div>
+    <nav aria-label="Sections">
+      <a href="#overview">Overview</a>
+      <a href="#facilities">Facilities</a>
+      <a href="#analytics">Analytics</a>
+      <a href="#evaluation">Evaluation</a>
+      <a href="#operations">Operations</a>
+    </nav>
+    <div class="hd-right">
+      <div class="sim-ctl" role="group" aria-label="Simulation controls">
+        <button id="btn-pause" title="Pause / resume live feed" aria-pressed="false">⏸ PAUSE</button>
+        <button class="spd on" data-spd="1">1×</button>
+        <button class="spd" data-spd="2">2×</button>
+        <button class="spd" data-spd="4">4×</button>
+      </div>
+      <button class="hd-btn demo" id="btn-demo" title="Inject a high-ammonia event to demo the alert workflow">⚡ Simulate incident</button>
+      <button class="hd-btn" id="btn-theme" title="Toggle light / dark theme" aria-pressed="false">🌙 <span id="theme-lbl">Dark</span></button>
+      <div class="clock"><span class="pulse" id="pulse"></span><span id="clock">--:--:-- IST</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ Command strip ============ -->
+  <section id="overview">
+    <div class="eyebrow">Network Overview · refreshed every <span id="cycle-label">3</span> s</div>
+    <h2>Live Situation</h2>
+    <div class="command">
+      <div class="kpi-panel" id="kpis">
+        <div class="kpi"><div class="k-label">Facilities online</div><div class="k-value" id="k-online">–</div><div class="k-delta" id="k-online-d">all reporting</div><canvas class="spark" id="sp-online" width="86" height="30"></canvas></div>
+        <div class="kpi"><div class="k-label">Stalls available now</div><div class="k-value ok" id="k-free">–</div><div class="k-delta" id="k-free-d"></div><canvas class="spark" id="sp-free" width="86" height="30"></canvas></div>
+        <div class="kpi"><div class="k-label">Active alerts</div><div class="k-value" id="k-alerts">–</div><div class="k-delta" id="k-alerts-d"></div><canvas class="spark" id="sp-alerts" width="86" height="30"></canvas></div>
+        <div class="kpi"><div class="k-label">Avg. cleanliness score</div><div class="k-value" id="k-clean">–</div><div class="k-delta" id="k-clean-d"></div><canvas class="spark" id="sp-clean" width="86" height="30"></canvas></div>
+        <div class="kpi"><div class="k-label">Footfall today</div><div class="k-value" id="k-foot">–</div><div class="k-delta" id="k-foot-d">entries across network</div><canvas class="spark" id="sp-foot" width="86" height="30"></canvas></div>
+        <div class="kpi"><div class="k-label">Open citizen reports</div><div class="k-value" id="k-reports">0</div><div class="k-delta">via “Report an issue”</div><canvas class="spark" id="sp-reports" width="86" height="30"></canvas></div>
+      </div>
+
+      <div class="map-panel">
+        <div class="map-head">
+          <div class="t">City Map · Bengaluru</div>
+          <div class="legend" aria-hidden="true">
+            <span><i style="background:#3ECF8E"></i>Normal</span>
+            <span><i style="background:#F0A24B"></i>Busy</span>
+            <span><i style="background:#F0604A"></i>Alert</span>
+            <span><i style="background:#8CA0C9"></i>Repair</span>
+          </div>
+        </div>
+        <div class="map-body">
+          <svg id="citymap" viewBox="0 0 640 430" role="img" aria-label="Schematic map of Bengaluru with live facility status pins">
+            <defs>
+              <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+                <path d="M32 0H0V32" fill="none" stroke="#1B382F" stroke-width="1"/>
+              </pattern>
+            </defs>
+            <rect width="640" height="430" fill="url(#grid)"/>
+            <!-- Outer Ring Road -->
+            <ellipse cx="315" cy="215" rx="255" ry="175" fill="none" stroke="#2A5346" stroke-width="2.5" stroke-dasharray="1 0"/>
+            <!-- arterial roads -->
+            <path d="M60 215 H575" stroke="#234A3E" stroke-width="2"/>
+            <path d="M315 40 V395" stroke="#234A3E" stroke-width="2"/>
+            <path d="M140 90 L490 350" stroke="#1E4237" stroke-width="1.6"/>
+            <path d="M120 330 L500 100" stroke="#1E4237" stroke-width="1.6"/>
+            <!-- lakes -->
+            <ellipse cx="470" cy="140" rx="34" ry="18" fill="#153B3F" opacity=".8"/>
+            <ellipse cx="180" cy="300" rx="28" ry="15" fill="#153B3F" opacity=".8"/>
+            <text x="470" y="143" text-anchor="middle" font-size="8" fill="#3E6E68" font-family="IBM Plex Mono,monospace">ULSOOR LAKE</text>
+            <text x="180" y="303" text-anchor="middle" font-size="8" fill="#3E6E68" font-family="IBM Plex Mono,monospace">LALBAGH</text>
+            <g id="map-pins"></g>
+          </svg>
+        </div>
+        <div class="map-foot">
+          <span>PROTOCOL: JSON / 3s TELEMETRY</span>
+          <span id="map-status">6 NODES · LINK OK</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Facilities ============ -->
+  <section id="facilities">
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">Stall-level occupancy · live sensors</div>
+        <h2>Facilities</h2>
+      </div>
+      <div class="toolbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="search" type="search" placeholder="Search facility or area…" aria-label="Search facilities">
+        </div>
+        <div class="chips" role="group" aria-label="Filter by status">
+          <button class="chip on" data-filter="all">All</button>
+          <button class="chip" data-filter="ok">Normal</button>
+          <button class="chip" data-filter="busy">Busy</button>
+          <button class="chip" data-filter="alert">Alerts</button>
+          <button class="chip" data-filter="maint">Repair</button>
+        </div>
+        <select class="sort" id="sort" aria-label="Sort facilities">
+          <option value="id">Sort: Facility ID</option>
+          <option value="clean-asc">Cleanliness · worst first</option>
+          <option value="clean-desc">Cleanliness · best first</option>
+          <option value="foot-desc">Footfall · highest first</option>
+          <option value="free-desc">Free stalls · most first</option>
+        </select>
+      </div>
+    </div>
+    <div class="fac-grid" id="fac-grid"></div>
+  </section>
+
+  <!-- ============ Analytics ============ -->
+  <section id="analytics">
+    <div class="eyebrow">Usage patterns · condition trends</div>
+    <h2>Analytics</h2>
+    <div class="charts">
+      <div class="chart-card">
+        <h4>Hourly Footfall — Network</h4>
+        <div class="sub">Aggregate entries per hour; peaks guide pre-emptive cleaning windows.</div>
+        <div class="chart-box"><canvas id="footChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h4>Cleanliness Score by Facility</h4>
+        <div class="sub">Live score (0–100). Red line marks the intervention threshold (60).</div>
+        <div class="chart-box"><canvas id="cleanChart"></canvas></div>
+      </div>
+      <div class="nh3-strip">
+        <h4 style="font-family:'Rajdhani',sans-serif;font-size:16.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase">Air Quality — NH₃ (ppm) across network</h4>
+        <div class="sub" style="font-size:12.5px;color:var(--muted)">Ammonia concentration is the primary hygiene proxy. Alert threshold: 25 ppm.</div>
+        <div class="nh3-cells" id="nh3-cells"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Network Analytics & Evaluation ============ -->
+  <section id="evaluation">
+    <div class="eyebrow">System evaluation · detection & latency</div>
+    <h2>Network Analytics &amp; Evaluation</h2>
+    <div class="eval-grid">
+      <div class="eval-card">
+        <h4>Event Distribution</h4>
+        <div class="sub">Share of logged events this session, by class.</div>
+        <div class="eval-donut">
+          <canvas id="distChart" width="150" height="150"></canvas>
+          <div class="legend2" id="dist-legend"></div>
+        </div>
+      </div>
+      <div class="eval-card">
+        <h4>Alert Latency</h4>
+        <div class="sub">Time from a threshold being crossed to the dashboard alert.</div>
+        <div class="lat-row"><span class="ln">Sensor read</span><span class="lbar"><i style="width:18%"></i></span><span class="lv">40 ms</span></div>
+        <div class="lat-row"><span class="ln">Rule eval</span><span class="lbar"><i style="width:11%"></i></span><span class="lv">25 ms</span></div>
+        <div class="lat-row"><span class="ln">Alert dispatch</span><span class="lbar"><i style="width:27%"></i></span><span class="lv">60 ms</span></div>
+        <div class="lat-row"><span class="ln">Dashboard render</span><span class="lbar"><i style="width:43%"></i></span><span class="lv">95 ms</span></div>
+        <div class="lat-row e2e"><span class="ln">End-to-end</span><span class="lbar"><i style="width:100%"></i></span><span class="lv">220 ms</span></div>
+      </div>
+      <div class="eval-card">
+        <h4>Detection Summary</h4>
+        <div class="sub">Live counters for the running session.</div>
+        <div class="eval-stats">
+          <div class="eval-stat"><div class="n" id="ev-raised">0</div><div class="l">Alerts raised</div></div>
+          <div class="eval-stat"><div class="n" id="ev-acked">0</div><div class="l">Acknowledged</div></div>
+          <div class="eval-stat"><div class="n" id="ev-refill">0</div><div class="l">Refills scheduled</div></div>
+          <div class="eval-stat"><div class="n" id="ev-citizen">0</div><div class="l">Citizen reports</div></div>
+        </div>
+      </div>
+      <div class="eval-card eval-trend">
+        <h4>Network Cleanliness Trend</h4>
+        <div class="sub">Average cleanliness score across all facilities over the session.</div>
+        <div class="chart-box"><canvas id="trendChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Operations ============ -->
+  <section id="operations">
+    <div class="eyebrow">Alerts · maintenance · telemetry</div>
+    <h2>Operations</h2>
+    <div class="ops">
+      <div class="panel">
+        <div class="panel-head">
+          <h4>Live Alert Feed</h4>
+          <div class="mini" role="group" aria-label="Filter alerts">
+            <button class="af on" data-af="all">All</button>
+            <button class="af" data-af="alert">Critical</button>
+            <button class="af" data-af="warn">Warnings</button>
+          </div>
+        </div>
+        <div class="alert-list" id="alert-list"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h4>Maintenance Log</h4>
+          <div class="mini"><button id="btn-csv" title="Download the maintenance log as a CSV file">⬇ Export CSV</button></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Time</th><th>Facility</th><th>Task</th><th>Source</th></tr></thead>
+            <tbody id="maint-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="console" id="console" aria-label="Raw telemetry stream">
+        <div class="c-title">Raw sensor telemetry · JSON packets (as an ESP32 node would transmit)</div>
+        <div id="pkt-list"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ Facility drawer ============ -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title">
+  <div class="dr-head">
+    <div>
+      <h3 id="dr-title">Facility</h3>
+      <div class="loc" id="dr-loc"></div>
+    </div>
+    <button class="dr-close" id="dr-close" aria-label="Close facility details">✕</button>
+  </div>
+  <div class="dr-body">
+    <div class="gauges">
+      <div class="gauge"><div class="g-name">Ammonia NH₃ (ppm)</div><div class="g-val" id="g-nh3">–</div><canvas id="h-nh3"></canvas></div>
+      <div class="gauge"><div class="g-name">Cleanliness score</div><div class="g-val" id="g-clean">–</div><canvas id="h-clean"></canvas></div>
+      <div class="gauge"><div class="g-name">Water tank (%)</div><div class="g-val" id="g-water">–</div><canvas id="h-water"></canvas></div>
+      <div class="gauge"><div class="g-name">Soap level (%)</div><div class="g-val" id="g-soap">–</div><canvas id="h-soap"></canvas></div>
+    </div>
+    <div class="dr-sec">
+      <h5>Stalls</h5>
+      <div class="stall-row" id="dr-stalls"></div>
+    </div>
+    <div class="dr-sec">
+      <h5>Predicted maintenance</h5>
+      <div class="eta-line"><span>Water refill needed in</span><b id="eta-water">—</b></div>
+      <div class="eta-line"><span>Soap refill needed in</span><b id="eta-soap">—</b></div>
+    </div>
+    <div class="dr-sec">
+      <h5>Facility history — this session</h5>
+      <div class="dr-log" id="dr-log"></div>
+    </div>
+    <div class="dr-sec" style="display:flex;gap:9px">
+      <button class="btn solid" id="dr-clean">🧹 Dispatch cleaning crew</button>
+      <button class="btn warn" id="dr-report">🙋 Report an issue</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ============ Citizen report modal ============ -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+  <div class="box">
+    <h3 id="m-title">Report an issue</h3>
+    <div class="sub" id="m-fac">Facility</div>
+    <div class="issue-grid" id="issue-grid">
+      <button class="issue on">Overflowing dustbin</button>
+      <button class="issue">Broken door latch</button>
+      <button class="issue">No water in taps</button>
+      <button class="issue">Foul smell</button>
+      <button class="issue">Lighting not working</button>
+      <button class="issue">Needs cleaning</button>
+    </div>
+    <textarea id="m-note" placeholder="Anything else the crew should know? (optional)"></textarea>
+    <div class="row-btn">
+      <button class="btn ghost" id="m-cancel">Cancel</button>
+      <button class="btn solid" id="m-send">Send report</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<footer>
+  <div class="ft">
+    <span>SwachhSense — academic prototype · Department of CSE, Faculty of Engineering &amp; Technology, JAIN (Deemed-to-be University)</span>
+    <span>Sensor data is simulated · Supports Swachh Bharat Mission (Urban)</span>
+  </div>
+</footer>
+<script>
+/* =====================================================================
+   SwachhSense v2 — simulation engine, rule engine and UI controller
+   Data model matches the JSON packet a physical ESP32 node would send.
+===================================================================== */
+const rand=(a,b)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const $=id=>document.getElementById(id);
+
+const FACILITIES=[
+ {id:'BLR-01',name:'Majestic Bus Stand',loc:'Kempegowda Bus Station, Gandhi Nagar',stalls:8, mx:150,my:210},
+ {id:'BLR-02',name:'Cubbon Park',loc:'Kasturba Road entrance',stalls:6, mx:330,my:185},
+ {id:'BLR-03',name:'KR Market',loc:'Krishna Rajendra Market, Kalasipalya',stalls:8, mx:250,my:290},
+ {id:'BLR-04',name:'Indiranagar Metro',loc:'100 Feet Road, Indiranagar',stalls:6, mx:470,my:200},
+ {id:'BLR-05',name:'Jayanagar 4th Block',loc:'Jayanagar Shopping Complex',stalls:6, mx:320,my:340},
+ {id:'BLR-06',name:'MG Road',loc:'Mahatma Gandhi Road, Shivajinagar',stalls:5, mx:390,my:215},
+];
+const PIN_COLOR={ok:'#3ECF8E',busy:'#F0A24B',alert:'#F0604A',maint:'#8CA0C9'};
+const HIST_LEN=60;
+
+const state=FACILITIES.map((f,ix)=>({
+  ...f,
+  occ:Array.from({length:f.stalls},()=>Math.random()<.4),
+  oos:ix===2?[f.stalls-1]:[],                    // KR Market has one stall under repair
+  ammonia:rand(5,12), water:rand(55,95), soap:rand(40,90),
+  clean:rand(78,96), foot:Math.round(rand(140,420)),
+  status:'ok', lastCleaned:Date.now()-rand(5,80)*60000,
+  hist:{nh3:[],clean:[],water:[],soap:[]},
+  events:[]
+}));
+
+let alerts=[], maint=[], reportsOpen=0, ackCount=0;
+let sessionStats={normal:0,occupancy:0};
+let distChart=null, trendChart=null, netCleanHist=[];
+let paused=false, speed=1, baseInterval=3000, timer=null;
+let kpiHist={free:[],alerts:[],clean:[],foot:[],online:[],reports:[]};
+let facFilter='all', alertFilter='all', searchQ='', sortBy='id', drawerId=null;
+
+/* ---------- helpers ---------- */
+function timeIST(d=new Date()){return d.toLocaleTimeString('en-IN',{hour12:false,timeZone:'Asia/Kolkata'});}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600);}
+function facEvent(f,txt){f.events.unshift({t:timeIST(),txt});f.events=f.events.slice(0,40);}
+function pushAlert(level,msg,fid){
+  alerts.unshift({level,msg,fid,t:timeIST(),acked:false});
+  alerts=alerts.slice(0,60);
+}
+function logMaint(fid,task,source){
+  maint.unshift({t:timeIST(),fid,task,source});
+  maint=maint.slice(0,80);
+}
+
+/* ---------- rule engine ---------- */
+function evaluateRules(f){
+  // 1. Air quality (NH3)
+  if(f.ammonia>25 && f.status!=='alert'){
+    f.status='alert';
+    pushAlert('alert',`High ammonia (${f.ammonia.toFixed(1)} ppm) — cleaning crew dispatched`,f.id);
+    facEvent(f,`NH₃ crossed 25 ppm → crew dispatched`);
+  }else if(f.status==='alert' && Math.random()<.30){       // crew responds
+    f.ammonia=rand(4,9); f.clean=rand(88,97); f.lastCleaned=Date.now(); f.status='ok';
+    logMaint(f.id,'Responsive cleaning (NH₃ trigger)','sensor');
+    facEvent(f,'Cleaning completed — air quality restored');
+    pushAlert('info',`Cleaning completed — cleanliness ${f.clean.toFixed(0)}/100`,f.id);
+  }
+  // 2. Consumables
+  if(f.water<15){
+    pushAlert('warn',`Water tank low (${f.water.toFixed(0)}%) — refill scheduled`,f.id);
+    logMaint(f.id,'Water tank refill','sensor'); facEvent(f,'Water tank refilled');
+    f.water=rand(85,100);
+  }
+  if(f.soap<10){
+    pushAlert('warn',`Soap dispenser low (${f.soap.toFixed(0)}%) — refill scheduled`,f.id);
+    logMaint(f.id,'Soap dispenser refill','sensor'); facEvent(f,'Soap dispenser refilled');
+    f.soap=rand(80,100);
+  }
+  // 3. Derived status
+  if(f.status!=='alert'){
+    const free=f.occ.filter((o,i)=>!o&&!f.oos.includes(i)).length;
+    f.status = f.oos.length>=2?'maint' : free===0?'busy' : 'ok';
+  }
+}
+
+/* ---------- simulation tick ---------- */
+function tick(){
+  state.forEach(f=>{
+    f.occ=f.occ.map((o,i)=>f.oos.includes(i)?o:(Math.random()<.22?!o:o));
+    f.ammonia=clamp(f.ammonia+rand(-1.2,1.9),3,34);
+    f.water=clamp(f.water-rand(0,1.6),0,100);
+    f.soap=clamp(f.soap-rand(0,1.1),0,100);
+    f.clean=clamp(f.clean+rand(-1.4,0.9),40,100);
+    f.foot+=Math.round(rand(0,3));
+    evaluateRules(f);
+    ['nh3','clean','water','soap'].forEach(k=>{
+      const v=k==='nh3'?f.ammonia:k==='clean'?f.clean:k==='water'?f.water:f.soap;
+      f.hist[k].push(v); if(f.hist[k].length>HIST_LEN)f.hist[k].shift();
+    });
+    if(f.status==='ok')sessionStats.normal++; else if(f.status==='busy')sessionStats.occupancy++;
+    if(Math.random()<.35)emitPacket(f);
+  });
+  render();
+}
+
+/* ---------- telemetry console ---------- */
+function emitPacket(f){
+  const pkt={node:f.id,ts:new Date().toISOString(),nh3_ppm:+f.ammonia.toFixed(1),
+    water_pct:+f.water.toFixed(0),soap_pct:+f.soap.toFixed(0),
+    occupied:f.occ.filter(Boolean).length,stalls:f.stalls,footfall:f.foot};
+  const el=document.createElement('div');
+  el.textContent='» '+JSON.stringify(pkt);
+  const list=$('pkt-list'); list.prepend(el);
+  while(list.children.length>14)list.lastChild.remove();
+}
+
+/* ---------- KPI sparklines ---------- */
+function drawSpark(id,data,color){
+  const c=$(id); if(!c)return; const ctx=c.getContext('2d');
+  const w=c.width,h=c.height; ctx.clearRect(0,0,w,h);
+  if(data.length<2)return;
+  const min=Math.min(...data),max=Math.max(...data),span=(max-min)||1;
+  ctx.beginPath();
+  data.forEach((v,i)=>{const x=i/(data.length-1)*(w-4)+2, y=h-3-((v-min)/span)*(h-8);
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+  ctx.strokeStyle=color;ctx.lineWidth=1.6;ctx.stroke();
+}
+
+/* ---------- render ---------- */
+function statusBadge(f){
+  return {ok:['Normal','ok'],busy:['All stalls full','busy'],alert:['⚠ Alert — crew dispatched','alert'],maint:['Under repair','maint']}[f.status];
+}
+function barCls(v,lo,hi){return v<lo?'r':v<hi?'a':'g';}
+function minsAgo(ts){return Math.max(0,Math.round((Date.now()-ts)/60000));}
+
+function facilityCard(f){
+  const free=f.occ.filter((o,i)=>!o&&!f.oos.includes(i)).length;
+  const [btxt,bcls]=statusBadge(f);
+  const stalls=f.occ.map((o,i)=>{
+    const cls=f.oos.includes(i)?'oos':o?'occ':'free';
+    const ico=f.oos.includes(i)?'🛠':o?'●':'○';
+    const lab=f.oos.includes(i)?'out of service':o?'occupied':'free';
+    return `<span class="stall ${cls}" title="Stall ${i+1}: ${lab}">${ico}</span>`;
+  }).join('');
+  return `<article class="fac ${f.status==='alert'?'alerting':''}" id="fac-${f.id}" data-id="${f.id}">
+    <div class="fac-head">
+      <div>
+        <div class="fid">${f.id}</div>
+        <h3>${f.name}</h3>
+        <div class="loc">${f.loc}</div>
+      </div>
+      <span class="badge ${bcls}">${btxt}</span>
+    </div>
+    <div class="stalls">
+      <div class="s-label">Stalls · ${free} of ${f.stalls} free</div>
+      <div class="stall-row">${stalls}</div>
+    </div>
+    <div class="sensors">
+      <div class="sensor"><div class="s-name"><span>NH₃ air quality</span><b>${f.ammonia.toFixed(1)} ppm</b></div>
+        <div class="bar"><i class="${f.ammonia>25?'r':f.ammonia>17?'a':'g'}" style="width:${clamp(f.ammonia/34*100,4,100)}%"></i></div></div>
+      <div class="sensor"><div class="s-name"><span>Cleanliness</span><b>${f.clean.toFixed(0)}/100</b></div>
+        <div class="bar"><i class="${barCls(f.clean,60,75)}" style="width:${f.clean}%"></i></div></div>
+      <div class="sensor"><div class="s-name"><span>Water tank</span><b>${f.water.toFixed(0)}%</b></div>
+        <div class="bar"><i class="${barCls(f.water,15,35)}" style="width:${f.water}%"></i></div></div>
+      <div class="sensor"><div class="s-name"><span>Soap level</span><b>${f.soap.toFixed(0)}%</b></div>
+        <div class="bar"><i class="${barCls(f.soap,10,30)}" style="width:${f.soap}%"></i></div></div>
+    </div>
+    <div class="fac-foot">
+      <span class="cleaned">🧽 cleaned ${minsAgo(f.lastCleaned)} min ago · 👣 ${f.foot}</span>
+      <div class="fac-actions">
+        <button class="btn ghost" data-detail="${f.id}">Details</button>
+        <button class="btn warn" data-report="${f.id}">Report an issue</button>
+      </div>
+    </div>
+  </article>`;
+}
+
+function matchesFilter(f){
+  if(facFilter!=='all'&&f.status!==facFilter)return false;
+  if(searchQ && !(f.name+' '+f.loc+' '+f.id).toLowerCase().includes(searchQ))return false;
+  return true;
+}
+function sortFacs(list){
+  const free=f=>f.occ.filter((o,i)=>!o&&!f.oos.includes(i)).length;
+  const cmp={
+    'id':(a,b)=>a.id.localeCompare(b.id),
+    'clean-asc':(a,b)=>a.clean-b.clean,
+    'clean-desc':(a,b)=>b.clean-a.clean,
+    'foot-desc':(a,b)=>b.foot-a.foot,
+    'free-desc':(a,b)=>free(b)-free(a),
+  }[sortBy];
+  return [...list].sort(cmp);
+}
+
+function renderMap(){
+  $('map-pins').innerHTML=state.map(f=>{
+    const c=PIN_COLOR[f.status];
+    return `<g class="pin" data-id="${f.id}" tabindex="0" role="button" aria-label="${f.name}: ${statusBadge(f)[0]}">
+      <circle class="halo" cx="${f.mx}" cy="${f.my}" r="9" fill="${c}" opacity=".4"/>
+      <circle cx="${f.mx}" cy="${f.my}" r="7" fill="${c}" stroke="#0D1F1B" stroke-width="2"/>
+      <text x="${f.mx}" y="${f.my-14}" text-anchor="middle">${f.id.slice(4)} · ${f.name.toUpperCase()}</text>
+    </g>`;}).join('');
+  const alertsN=state.filter(f=>f.status==='alert').length;
+  $('map-status').textContent=`${state.length} NODES · ${alertsN?alertsN+' IN ALERT':'LINK OK'}`;
+}
+
+function renderAlerts(){
+  const list=alerts.filter(a=>alertFilter==='all'||a.level===alertFilter);
+  $('alert-list').innerHTML=list.length?list.map((a,i)=>`
+    <div class="al ${a.level} ${a.acked?'acked':''}">
+      <span class="dot"></span>
+      <div><div class="msg">${a.msg}</div><div class="meta">${a.t} · ${a.fid}</div></div>
+      <button class="ack" data-ack="${alerts.indexOf(a)}">ACK</button>
+    </div>`).join('')
+    :'<div style="padding:26px;text-align:center;color:var(--muted);font-size:13px">No alerts in this view — the network is healthy.</div>';
+}
+function renderMaint(){
+  $('maint-body').innerHTML=maint.length?maint.map(m=>`
+    <tr><td class="mono">${m.t}</td><td class="mono">${m.fid}</td><td>${m.task}</td>
+    <td><span class="tag ${m.source}">${m.source}</span></td></tr>`).join('')
+    :'<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">No maintenance actions yet this session.</td></tr>';
+}
+function renderNh3(){
+  $('nh3-cells').innerHTML=state.map(f=>{
+    const cls=f.ammonia>25?'hi':f.ammonia>17?'md':'lo';
+    return `<div class="nh3-cell ${cls}"><div class="n">${f.id} · ${f.name}</div><div class="v">${f.ammonia.toFixed(1)}<span style="font-size:13px;font-family:'Public Sans'"> ppm</span></div></div>`;
+  }).join('');
+}
+
+function render(){
+  // KPIs
+  const online=state.length;
+  const free=state.reduce((s,f)=>s+f.occ.filter((o,i)=>!o&&!f.oos.includes(i)).length,0);
+  const activeAlerts=alerts.filter(a=>!a.acked&&a.level!=='info').length;
+  const avgClean=state.reduce((s,f)=>s+f.clean,0)/state.length;
+  const foot=state.reduce((s,f)=>s+f.foot,0);
+  $('k-online').textContent=online;
+  $('k-free').textContent=free;
+  const ka=$('k-alerts');ka.textContent=activeAlerts;ka.className='k-value '+(activeAlerts>2?'bad':activeAlerts?'warn':'ok');
+  const kc=$('k-clean');kc.textContent=avgClean.toFixed(0);kc.className='k-value '+(avgClean<60?'bad':avgClean<75?'warn':'ok');
+  $('k-foot').textContent=foot.toLocaleString('en-IN');
+  $('k-reports').textContent=reportsOpen;
+  $('k-free-d').textContent=`of ${state.reduce((s,f)=>s+f.stalls,0)} total stalls`;
+  $('k-alerts-d').textContent=ackCount?`${ackCount} acknowledged`:`unacknowledged`;
+  $('k-clean-d').textContent=avgClean<60?'below threshold':'network average';
+  // sparkline history
+  const push=(k,v)=>{kpiHist[k].push(v);if(kpiHist[k].length>40)kpiHist[k].shift();};
+  push('free',free);push('alerts',activeAlerts);push('clean',avgClean);push('foot',foot);push('online',online);push('reports',reportsOpen);
+  drawSpark('sp-free',kpiHist.free,'#178A54');drawSpark('sp-alerts',kpiHist.alerts,'#C2381F');
+  drawSpark('sp-clean',kpiHist.clean,'#0E6B5C');drawSpark('sp-foot',kpiHist.foot,'#DD7A1E');
+  drawSpark('sp-online',kpiHist.online,'#5B6C8F');drawSpark('sp-reports',kpiHist.reports,'#DD7A1E');
+  // facility grid
+  $('fac-grid').innerHTML=sortFacs(state.filter(matchesFilter)).map(facilityCard).join('')
+    ||'<div style="grid-column:1/-1;padding:34px;text-align:center;color:var(--muted)">No facilities match this filter or search.</div>';
+  renderMap();renderAlerts();renderMaint();renderNh3();updateCharts();updateEval();refreshDrawer();
+}
+
+/* ---------- charts ---------- */
+let footChart,cleanChart;
+const hours=[...Array(24).keys()].map(h=>String(h).padStart(2,'0')+':00');
+const demandCurve=h=>{ // morning, lunch, evening peaks
+  const g=(m,s,a)=>a*Math.exp(-((h-m)**2)/(2*s*s));
+  return Math.round(20+g(8,1.4,140)+g(13,1.6,110)+g(19,1.7,150)+rand(-8,8));
+};
+let footData=hours.map((_,h)=>demandCurve(h));
+function initCharts(){
+  Chart.defaults.font.family="'Public Sans',sans-serif";
+  Chart.defaults.color='#5C6E68';
+  footChart=new Chart($('footChart'),{type:'line',data:{labels:hours,datasets:[{
+    data:footData,fill:true,tension:.42,borderColor:'#0E6B5C',borderWidth:2.2,
+    backgroundColor:c=>{const g=c.chart.ctx.createLinearGradient(0,0,0,260);
+      g.addColorStop(0,'rgba(14,107,92,.28)');g.addColorStop(1,'rgba(14,107,92,0)');return g;},
+    pointRadius:0,pointHitRadius:12}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8}},y:{grid:{color:'#EBF0EC'},title:{display:true,text:'entries / hour'}}}}});
+  cleanChart=new Chart($('cleanChart'),{type:'bar',data:{labels:state.map(f=>f.id),datasets:[{
+    data:state.map(f=>f.clean),borderRadius:7,borderSkipped:false,
+    backgroundColor:state.map(f=>f.clean<60?'#C2381F':f.clean<75?'#DD7A1E':'#0E6B5C')}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>` ${state[c.dataIndex].name}: ${c.parsed.y.toFixed(0)}/100`}}},
+    scales:{y:{min:0,max:100,grid:{color:'#EBF0EC'}},x:{grid:{display:false}}}}});
+}
+function updateCharts(){
+  if(!cleanChart)return;
+  cleanChart.data.datasets[0].data=state.map(f=>f.clean);
+  cleanChart.data.datasets[0].backgroundColor=state.map(f=>f.clean<60?'#C2381F':f.clean<75?'#DD7A1E':'#0E6B5C');
+  cleanChart.update('none');
+}
+
+/* ---------- evaluation panel ---------- */
+const DIST_DEFS=[
+  ['Normal readings','#0E6B5C'],['Cleaning alerts','#DD7A1E'],['Refill warnings','#2A7FB8'],
+  ['Occupancy (full)','#8CA0C9'],['Citizen reports','#B5561C']
+];
+function distData(){
+  const cleaning=maint.filter(m=>/cleaning/i.test(m.task)).length;
+  const refill=maint.filter(m=>/refill/i.test(m.task)).length;
+  const citizen=maint.filter(m=>m.source==='citizen').length;
+  return [Math.max(sessionStats.normal,1),cleaning,refill,sessionStats.occupancy,citizen];
+}
+function initEvalCharts(){
+  distChart=new Chart($('distChart'),{type:'doughnut',
+    data:{labels:DIST_DEFS.map(d=>d[0]),datasets:[{data:distData(),
+      backgroundColor:DIST_DEFS.map(d=>d[1]),borderWidth:2,borderColor:getComputedStyle(document.body).getPropertyValue('--card')||'#fff'}]},
+    options:{responsive:false,cutout:'62%',plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed}`}}}}});
+  trendChart=new Chart($('trendChart'),{type:'line',
+    data:{labels:[],datasets:[{data:[],borderColor:'#0E6B5C',borderWidth:2.2,tension:.4,pointRadius:0,fill:true,
+      backgroundColor:c=>{const g=c.chart.ctx.createLinearGradient(0,0,0,190);
+        g.addColorStop(0,'rgba(14,107,92,.26)');g.addColorStop(1,'rgba(14,107,92,0)');return g;}}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>` avg cleanliness: ${c.parsed.y.toFixed(1)}/100`}}},
+      scales:{x:{grid:{display:false},ticks:{maxTicksLimit:6}},
+        y:{min:40,max:100,grid:{color:'#EBF0EC'},title:{display:true,text:'avg score'}}}}});
+  $('dist-legend').innerHTML=DIST_DEFS.map((d,i)=>
+    `<span><i style="background:${d[1]}"></i>${d[0]}<b id="dl-${i}">0</b></span>`).join('');
+}
+function updateEval(){
+  if(!distChart)return;
+  const d=distData();
+  distChart.data.datasets[0].data=d; distChart.update('none');
+  d.forEach((v,i)=>{const el=$('dl-'+i);if(el)el.textContent=v;});
+  // detection summary
+  $('ev-raised').textContent=maint.filter(m=>m.source==='sensor').length;
+  $('ev-acked').textContent=ackCount;
+  $('ev-refill').textContent=maint.filter(m=>/refill/i.test(m.task)).length;
+  $('ev-citizen').textContent=reportsOpen;
+  // network cleanliness trend
+  const avg=state.reduce((s,f)=>s+f.clean,0)/state.length;
+  netCleanHist.push(avg); if(netCleanHist.length>60)netCleanHist.shift();
+  trendChart.data.labels=netCleanHist.map((_,i)=>i);
+  trendChart.data.datasets[0].data=netCleanHist; trendChart.update('none');
+}
+/* predicted refill ETA from recent drain rate */
+function refillETA(hist,threshold){
+  if(!hist||hist.length<6)return null;
+  const n=hist.length, recent=hist.slice(-6);
+  const drop=(recent[0]-recent[recent.length-1])/(recent.length-1); // per cycle
+  const cur=hist[n-1];
+  if(cur<=threshold)return 0;
+  if(drop<=0.02)return Infinity;
+  return Math.round((cur-threshold)/drop); // cycles
+}
+function etaText(cycles){
+  if(cycles===null)return 'gathering data…';
+  if(cycles===0)return 'now';
+  if(!isFinite(cycles))return 'stable';
+  const secs=cycles*(baseInterval/1000)/speed;
+  if(secs<90)return `~${Math.round(secs)} s`;
+  return `~${Math.round(secs/60)} min`;
+}
+
+/* ---------- drawer ---------- */
+const histCharts={};
+function histLine(id,data,color){
+  const c=$(id);if(!c)return;
+  if(histCharts[id]){histCharts[id].data.labels=data.map((_,i)=>i);histCharts[id].data.datasets[0].data=data;histCharts[id].update('none');return;}
+  histCharts[id]=new Chart(c,{type:'line',data:{labels:data.map((_,i)=>i),datasets:[{data,borderColor:color,borderWidth:1.8,pointRadius:0,tension:.4,fill:false}]},
+    options:{responsive:false,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},
+    scales:{x:{display:false},y:{display:false}},maintainAspectRatio:false}});
+}
+function openDrawer(id){
+  drawerId=id;$('drawer').classList.add('open');$('scrim').classList.add('open');
+  refreshDrawer();$('dr-close').focus();
+}
+function closeDrawer(){drawerId=null;$('drawer').classList.remove('open');$('scrim').classList.remove('open');}
+function refreshDrawer(){
+  if(!drawerId)return;
+  const f=state.find(x=>x.id===drawerId);
+  $('dr-title').textContent=`${f.id} — ${f.name}`;
+  $('dr-loc').textContent=f.loc;
+  $('g-nh3').textContent=f.ammonia.toFixed(1);
+  $('g-clean').textContent=f.clean.toFixed(0);
+  $('g-water').textContent=f.water.toFixed(0)+'%';
+  $('g-soap').textContent=f.soap.toFixed(0)+'%';
+  histLine('h-nh3',f.hist.nh3,'#C2381F');histLine('h-clean',f.hist.clean,'#0E6B5C');
+  histLine('h-water',f.hist.water,'#2A7FB8');histLine('h-soap',f.hist.soap,'#DD7A1E');
+  $('eta-water').textContent=etaText(refillETA(f.hist.water,15));
+  $('eta-soap').textContent=etaText(refillETA(f.hist.soap,10));
+  $('dr-stalls').innerHTML=f.occ.map((o,i)=>{
+    const cls=f.oos.includes(i)?'oos':o?'occ':'free';
+    return `<span class="stall ${cls}">${f.oos.includes(i)?'🛠':o?'●':'○'}</span>`;}).join('');
+  $('dr-log').innerHTML=f.events.length?f.events.map(e=>`<div class="row"><span class="t">${e.t}</span><span>${e.txt}</span></div>`).join('')
+    :'<div class="row" style="color:var(--muted)">No events yet for this facility.</div>';
+}
+
+/* ---------- citizen report ---------- */
+let reportFid=null;
+function openReport(id){
+  reportFid=id;const f=state.find(x=>x.id===id);
+  $('m-fac').textContent=`${f.id} — ${f.name}, ${f.loc}`;
+  $('m-note').value='';$('modal').classList.add('open');
+  document.querySelector('#issue-grid .issue').focus();
+}
+function closeReport(){$('modal').classList.remove('open');reportFid=null;}
+function sendReport(){
+  const f=state.find(x=>x.id===reportFid);if(!f)return;
+  const issue=document.querySelector('#issue-grid .issue.on').textContent;
+  const note=$('m-note').value.trim();
+  reportsOpen++; sessionStats.citizen=(sessionStats.citizen||0)+1;
+  pushAlert('warn',`Citizen report: ${issue}${note?' — “'+note+'”':''}`,f.id);
+  logMaint(f.id,`Citizen report: ${issue}`,'citizen');
+  facEvent(f,`Citizen reported: ${issue}`);
+  closeReport();toast(`Report sent for ${f.name}. Crew has been notified — thank you!`);
+  render();
+}
+
+/* ---------- simulation controls ---------- */
+function startTimer(){clearInterval(timer);if(!paused)timer=setInterval(tick,baseInterval/speed);}
+$('btn-pause').addEventListener('click',e=>{
+  paused=!paused;e.currentTarget.textContent=paused?'▶ RESUME':'⏸ PAUSE';
+  e.currentTarget.setAttribute('aria-pressed',paused);
+  $('pulse').classList.toggle('paused',paused);
+  toast(paused?'Live feed paused':'Live feed resumed');startTimer();
+});
+$('btn-theme').addEventListener('click',e=>{
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+  e.currentTarget.setAttribute('aria-pressed',(!dark).toString());
+  $('theme-lbl').textContent=dark?'Dark':'Light';
+  e.currentTarget.firstChild.textContent=dark?'🌙 ':'☀️ ';
+  // recolor doughnut border to match new card background
+  if(distChart){distChart.data.datasets[0].borderColor=getComputedStyle(document.body).getPropertyValue('--card')||'#fff';distChart.update('none');}
+});
+$('btn-demo').addEventListener('click',()=>{
+  const ok=state.filter(f=>f.status==='ok');
+  const f=(ok.length?ok:state)[Math.floor(Math.random()*(ok.length||state.length))];
+  f.ammonia=rand(27,33);
+  toast(`Incident injected at ${f.name} — watch the alert workflow`);
+  tick();
+});
+document.querySelectorAll('.spd').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.spd').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  speed=+b.dataset.spd;$('cycle-label').textContent=(3/speed).toFixed(speed===1?0:1);startTimer();
+}));
+
+/* ---------- global event delegation ---------- */
+document.addEventListener('click',e=>{
+  const d=e.target.closest('[data-detail]');if(d)return openDrawer(d.dataset.detail);
+  const r=e.target.closest('[data-report]');if(r)return openReport(r.dataset.report);
+  const a=e.target.closest('[data-ack]');if(a){alerts[+a.dataset.ack].acked=true;ackCount++;render();return;}
+  const pin=e.target.closest('.pin');if(pin)return openDrawer(pin.dataset.id);
+  const chip=e.target.closest('.chip');if(chip){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));chip.classList.add('on');facFilter=chip.dataset.filter;render();return;}
+  const af=e.target.closest('.af');if(af){document.querySelectorAll('.af').forEach(c=>c.classList.remove('on'));af.classList.add('on');alertFilter=af.dataset.af;renderAlerts();return;}
+  const iss=e.target.closest('.issue');if(iss){document.querySelectorAll('.issue').forEach(c=>c.classList.remove('on'));iss.classList.add('on');return;}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeDrawer();closeReport();}
+  const pin=e.target.closest?.('.pin');
+  if(pin&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openDrawer(pin.dataset.id);}
+});
+$('scrim').addEventListener('click',closeDrawer);
+$('dr-close').addEventListener('click',closeDrawer);
+$('m-cancel').addEventListener('click',closeReport);
+$('m-send').addEventListener('click',sendReport);
+$('dr-report').addEventListener('click',()=>{const id=drawerId;closeDrawer();openReport(id);});
+$('dr-clean').addEventListener('click',()=>{
+  const f=state.find(x=>x.id===drawerId);if(!f)return;
+  f.ammonia=rand(4,9);f.clean=rand(88,97);f.lastCleaned=Date.now();f.status='ok';
+  logMaint(f.id,'Manual cleaning dispatch (supervisor)','routine');
+  facEvent(f,'Supervisor dispatched cleaning crew');
+  toast(`Cleaning crew dispatched to ${f.name}`);render();
+});
+$('search').addEventListener('input',e=>{searchQ=e.target.value.trim().toLowerCase();render();});
+$('sort').addEventListener('change',e=>{sortBy=e.target.value;render();});
+$('btn-csv').addEventListener('click',()=>{
+  const rows=[['time','facility','task','source'],...maint.map(m=>[m.t,m.fid,m.task,m.source])];
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='swachhsense-maintenance-log.csv';a.click();URL.revokeObjectURL(a.href);
+  toast('Maintenance log exported as CSV');
+});
+
+/* ---------- clock + boot ---------- */
+setInterval(()=>{$('clock').textContent=timeIST()+' IST';},1000);
+logMaint('BLR-03','Stall 8 marked out of service — flush valve repair','routine');
+state[2].events.unshift({t:timeIST(),txt:'Stall 8 marked out of service (flush valve)'});
+pushAlert('info','Monitoring started — all 6 facilities reporting','SYSTEM');
+initCharts();initEvalCharts();tick();startTimer();
+</script>
+</body>
+</html>
