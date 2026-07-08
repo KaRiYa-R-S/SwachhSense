@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facility Network — SwachhSense</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/auth-guard.js"></script>
+</head>
+<body>
+
+<div class="sitebar">
+  <div class="sb-in">
+    <a class="sb-brand" href="index.html">
+      <span class="sb-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 7 5 10.2 5 14a7 7 0 0 0 14 0c0-3.8-3-7-7-12z"/><path d="M9 14a3 3 0 0 0 3 3"/></svg></span>
+      <b>Swachh<em>Sense</em></b>
+    </a>
+    <nav class="sb-nav" aria-label="Site">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="facilities.html" aria-current="page">Facilities</a>
+      <a href="technology.html">Technology</a>
+      <a href="team.html">Team</a>
+    </nav>
+    <div class="sb-right">
+      <span class="sb-user" data-user-email>…</span>
+      <button class="sb-btn" data-logout>Log out</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="eyebrow">Pilot deployment · Bengaluru</div>
+  <h1 class="pg">Facility Network</h1>
+  <p class="lede">Six public toilet facilities across Bengaluru carry SwachhSense nodes in this pilot. Each node reports stall occupancy, ammonia, water-tank level, soap level and footfall every few seconds. Open the <a href="dashboard.html">command centre</a> to watch them live.</p>
+
+  <div class="grid3">
+    <div class="card fac-card">
+      <div class="fid">BLR-01</div>
+      <h3>Majestic Bus Stand</h3>
+      <div class="loc">Kempegowda Bus Station, Gandhi Nagar</div>
+      <span class="badge saff">Highest footfall in network</span>
+      <div style="margin-top:12px">
+        <div class="spec"><span>Stalls</span><b>8</b></div>
+        <div class="spec"><span>Sensors</span><b>NH₃ · IR · US ×2</b></div>
+        <div class="spec"><span>Context</span><b>Transit hub</b></div>
+      </div>
+    </div>
+    <div class="card fac-card">
+      <div class="fid">BLR-02</div>
+      <h3>Cubbon Park</h3>
+      <div class="loc">Kasturba Road entrance</div>
+      <span class="badge ok">Consistently high cleanliness</span>
+      <div style="margin-top:12px">
+        <div class="spec"><span>Stalls</span><b>6</b></div>
+        <div class="spec"><span>Sensors</span><b>NH₃ · IR · US ×2</b></div>
+        <div class="spec"><span>Context</span><b>Park / recreation</b></div>
+      </div>
+    </div>
+    <div class="card fac-card">
+      <div class="fid">BLR-03</div>
+      <h3>KR Market</h3>
+      <div class="loc">Krishna Rajendra Market, Kalasipalya</div>
+      <span class="badge soft">1 stall under repair</span>
+      <div style="margin-top:12px">
+        <div class="spec"><span>Stalls</span><b>8</b></div>
+        <div class="spec"><span>Sensors</span><b>NH₃ · IR · US ×2</b></div>
+        <div class="spec"><span>Context</span><b>Wholesale market</b></div>
+      </div>
+    </div>
+    <div class="card fac-card">
+      <div class="fid">BLR-04</div>
+      <h3>Indiranagar Metro</h3>
+      <div class="loc">100 Feet Road, Indiranagar</div>
+      <span class="badge soft">Peak load at commute hours</span>
+      <div style="margin-top:12px">
+        <div class="spec"><span>Stalls</span><b>6</b></div>
+        <div class="spec"><span>Sensors</span><b>NH₃ · IR · US ×2</b></div>
+        <div class="spec"><span>Context</span><b>Metro station</b></div>
+      </div>
+    </div>
+    <div class="card fac-card">
+      <div class="fid">BLR-05</div>
+      <h3>Jayanagar 4th Block</h3>
+      <div class="loc">Jayanagar Shopping Complex</div>
+      <span class="badge ok">Stable supply levels</span>
+      <div style="margin-top:12px">
+        <div class="spec"><span>Stalls</span><b>6</b></div>
+        <div class="spec"><span>Sensors</span><b>NH₃ · IR · US ×2</b></div>
+        <div class="spec"><span>Context</span><b>Shopping district</b></div>
+      </div>
+    </div>
+    <div class="card fac-card">
+      <div class="fid">BLR-06</div>
+      <h3>MG Road</h3>
+      <div class="loc">Mahatma Gandhi Road, Shivajinagar</div>
+      <span class="badge soft">Compact 5-stall unit</span>
+      <div style="margin-top:12px">
+        <div class="spec"><span>Stalls</span><b>5</b></div>
+        <div class="spec"><span>Sensors</span><b>NH₃ · IR · US ×2</b></div>
+        <div class="spec"><span>Context</span><b>Commercial street</b></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">What each node measures</h2>
+  <div class="grid2">
+    <div class="card">
+      <b>Per-stall occupancy</b>
+      <p style="font-size:13.5px;color:var(--muted);margin-top:4px">Magnetic latch + IR pair per stall reports occupied / free / out-of-service, powering the live availability count on the dashboard and map pins.</p>
+    </div>
+    <div class="card">
+      <b>Ammonia (NH₃) concentration</b>
+      <p style="font-size:13.5px;color:var(--muted);margin-top:4px">The strongest single proxy for odour and hygiene. Readings above 25 ppm automatically raise a cleaning alert for that facility.</p>
+    </div>
+    <div class="card">
+      <b>Water tank &amp; soap levels</b>
+      <p style="font-size:13.5px;color:var(--muted);margin-top:4px">Ultrasonic level sensors forecast when a refill will be needed, so consumables are dispatched before they run out — not after.</p>
+    </div>
+    <div class="card">
+      <b>Footfall</b>
+      <p style="font-size:13.5px;color:var(--muted);margin-top:4px">Entry counts per facility reveal daily usage curves, which drive crew scheduling and identify under-served locations.</p>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="ft">
+    <span>SwachhSense — academic prototype · Department of CSE, Faculty of Engineering &amp; Technology, JAIN (Deemed-to-be University)</span>
+    <span>Sensor data is simulated · Supports Swachh Bharat Mission (Urban)</span>
+  </div>
+</footer>
+</body>
+</html>
