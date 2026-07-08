@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Technology &amp; Architecture — SwachhSense</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/auth-guard.js"></script>
+</head>
+<body>
+
+<div class="sitebar">
+  <div class="sb-in">
+    <a class="sb-brand" href="index.html">
+      <span class="sb-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 7 5 10.2 5 14a7 7 0 0 0 14 0c0-3.8-3-7-7-12z"/><path d="M9 14a3 3 0 0 0 3 3"/></svg></span>
+      <b>Swachh<em>Sense</em></b>
+    </a>
+    <nav class="sb-nav" aria-label="Site">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="facilities.html">Facilities</a>
+      <a href="technology.html" aria-current="page">Technology</a>
+      <a href="team.html">Team</a>
+    </nav>
+    <div class="sb-right">
+      <span class="sb-user" data-user-email>…</span>
+      <button class="sb-btn" data-logout>Log out</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="eyebrow">System design</div>
+  <h1 class="pg">Technology &amp; Architecture</h1>
+  <p class="lede">SwachhSense is designed as a full IoT pipeline. In this academic prototype the hardware layer is simulated in the browser — but the data model, thresholds and workflows are exactly what a physical deployment would use.</p>
+
+  <h2 class="sec">Data pipeline</h2>
+  <div class="pipe">
+    <div class="node">
+      <div class="tag">Layer 1 · Edge</div>
+      <h3>Sensor node</h3>
+      <p>ESP32 microcontroller with MQ-137 ammonia sensor, HC-SR04 ultrasonic level sensors (water &amp; soap), IR footfall counter and per-stall occupancy switches.</p>
+    </div>
+    <div class="node">
+      <div class="tag">Layer 2 · Transport</div>
+      <h3>Telemetry</h3>
+      <p>Readings are packaged as JSON packets every 3 seconds and streamed over Wi-Fi. The dashboard's telemetry console shows this raw stream.</p>
+    </div>
+    <div class="node">
+      <div class="tag">Layer 3 · Logic</div>
+      <h3>Rule engine</h3>
+      <p>Each packet is scored against hygiene thresholds. Breaches raise alerts with severity, and cleanliness is computed as a rolling 0–100 score.</p>
+    </div>
+    <div class="node">
+      <div class="tag">Layer 4 · Presentation</div>
+      <h3>Command centre</h3>
+      <p>Live KPIs, a city map, facility drill-downs, alert acknowledgement, crew dispatch, citizen reports and CSV export for maintenance logs.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">Sample telemetry packet</h2>
+  <div class="card" style="background:var(--night);border-color:var(--night-line)">
+<pre class="mono" style="color:#9DDCC4;font-size:12.5px;line-height:1.7;overflow-x:auto">{
+  "node":      "BLR-04",
+  "ts":        "2026-07-10T09:41:03+05:30",
+  "occupancy": [1, 0, 0, 1, 0, 1],
+  "nh3_ppm":   9.4,
+  "water_pct": 72,
+  "soap_pct":  58,
+  "footfall":  217,
+  "battery":   3.9,
+  "rssi":      -61
+}</pre>
+  </div>
+
+  <h2 class="sec">Alert thresholds</h2>
+  <table class="rules">
+    <thead><tr><th>Signal</th><th>Threshold</th><th>Alert raised</th><th>Suggested action</th></tr></thead>
+    <tbody>
+      <tr><td>Ammonia NH₃</td><td class="mono">&gt; 25 ppm</td><td>High odour / hygiene breach</td><td>Dispatch cleaning crew</td></tr>
+      <tr><td>Water tank</td><td class="mono">&lt; 20 %</td><td>Low water supply</td><td>Schedule tanker refill</td></tr>
+      <tr><td>Soap level</td><td class="mono">&lt; 15 %</td><td>Low soap supply</td><td>Restock dispensers</td></tr>
+      <tr><td>Cleanliness score</td><td class="mono">&lt; 60 / 100</td><td>Facility degrading</td><td>Inspect &amp; clean</td></tr>
+      <tr><td>Node heartbeat</td><td class="mono">missed 3 cycles</td><td>Node offline</td><td>Technician visit</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec">Software stack</h2>
+  <div class="grid3">
+    <div class="card"><b>Frontend</b><p style="font-size:13.5px;color:var(--muted);margin-top:4px">HTML5, CSS3 and vanilla JavaScript. Charts rendered with Chart.js 4; the city map is hand-built SVG.</p></div>
+    <div class="card"><b>Authentication</b><p style="font-size:13.5px;color:var(--muted);margin-top:4px">Firebase Authentication (email/password). A route guard redirects signed-out visitors to the login page before any protected content renders.</p></div>
+    <div class="card"><b>Hosting &amp; delivery</b><p style="font-size:13.5px;color:var(--muted);margin-top:4px">Deployed on Firebase Hosting with a global CDN. Source is version-controlled on GitHub with feature-based commits from every team member.</p></div>
+    <div class="card"><b>Simulation engine</b><p style="font-size:13.5px;color:var(--muted);margin-top:4px">A software model of six ESP32 nodes generates realistic telemetry — daily footfall curves, ammonia build-up between cleanings, supply depletion and random incidents.</p></div>
+    <div class="card"><b>Rule engine</b><p style="font-size:13.5px;color:var(--muted);margin-top:4px">Threshold evaluation, alert lifecycle (raise → acknowledge → resolve), refill ETAs and a composite cleanliness score per facility.</p></div>
+    <div class="card"><b>Planned hardware</b><p style="font-size:13.5px;color:var(--muted);margin-top:4px">ESP32-WROOM-32, MQ-137, HC-SR04 ×2, IR break-beam counter, reed switches per stall — roughly ₹2,400 per facility at pilot scale.</p></div>
+  </div>
+</main>
+
+<footer>
+  <div class="ft">
+    <span>SwachhSense — academic prototype · Department of CSE, Faculty of Engineering &amp; Technology, JAIN (Deemed-to-be University)</span>
+    <span>Sensor data is simulated · Supports Swachh Bharat Mission (Urban)</span>
+  </div>
+</footer>
+</body>
+</html>
