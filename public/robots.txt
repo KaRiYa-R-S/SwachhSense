@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /index.html
+Allow: /login.html
+Allow: /signup.html
+Disallow: /dashboard.html
+Disallow: /facilities.html
+Disallow: /technology.html
+Disallow: /team.html
